@@ -1,0 +1,220 @@
+<TaskerData sr="" dvi="1" tv="4.8u5m">
+  <dmetric>1440.0,2560.0</dmetric>
+  <Scene sr="scenepogo-finder">
+    <cdate>1469578967694</cdate>
+    <edate>1469581845237</edate>
+    <heightLand>-1</heightLand>
+    <heightPort>1184</heightPort>
+    <nme>pogo-finder</nme>
+    <widthLand>-1</widthLand>
+    <widthPort>647</widthPort>
+    <ButtonElement sr="elements0" ve="3">
+      <clickTask>4</clickTask>
+      <flags>4</flags>
+      <geom>7,74,640,197,106,52,468,148</geom>
+      <Str sr="arg0" ve="3">location</Str>
+      <Str sr="arg1" ve="3">Set Location</Str>
+      <Int sr="arg2" val="16" />
+      <Int sr="arg3" val="100" />
+      <Str sr="arg4" ve="3">#FF000000</Str>
+      <Str sr="arg5" ve="3" />
+      <Int sr="arg6" val="3" />
+      <Img sr="arg7" ve="2">
+        <nme>hd_device_access_location_found</nme>
+      </Img>
+    </ButtonElement>
+    <ButtonElement sr="elements1" ve="3">
+      <clickTask>5</clickTask>
+      <flags>4</flags>
+      <geom>7,296,640,197,106,298,468,149</geom>
+      <Str sr="arg0" ve="3">step3</Str>
+      <Str sr="arg1" ve="3">Set Steps to 3</Str>
+      <Int sr="arg2" val="16" />
+      <Int sr="arg3" val="100" />
+      <Str sr="arg4" ve="3">#FF000000</Str>
+      <Str sr="arg5" ve="3" />
+      <Int sr="arg6" val="3" />
+      <Img sr="arg7" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+    </ButtonElement>
+    <ButtonElement sr="elements2" ve="3">
+      <clickTask>6</clickTask>
+      <flags>4</flags>
+      <geom>7,517,640,197,106,298,468,149</geom>
+      <Str sr="arg0" ve="3">step5</Str>
+      <Str sr="arg1" ve="3">Set Steps to 5</Str>
+      <Int sr="arg2" val="16" />
+      <Int sr="arg3" val="100" />
+      <Str sr="arg4" ve="3">#FF000000</Str>
+      <Str sr="arg5" ve="3" />
+      <Int sr="arg6" val="3" />
+      <Img sr="arg7" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+    </ButtonElement>
+    <ButtonElement sr="elements3" ve="3">
+      <clickTask>7</clickTask>
+      <flags>4</flags>
+      <geom>7,739,640,197,106,298,468,149</geom>
+      <Str sr="arg0" ve="3">step7</Str>
+      <Str sr="arg1" ve="3">Set Steps to 7</Str>
+      <Int sr="arg2" val="16" />
+      <Int sr="arg3" val="100" />
+      <Str sr="arg4" ve="3">#FF000000</Str>
+      <Str sr="arg5" ve="3" />
+      <Int sr="arg6" val="3" />
+      <Img sr="arg7" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+    </ButtonElement>
+    <ButtonElement sr="elements4" ve="3">
+      <clickTask>8</clickTask>
+      <flags>4</flags>
+      <geom>260,979,125,125,260,979,125,125</geom>
+      <Str sr="arg0" ve="3">close</Str>
+      <Str sr="arg1" ve="3" />
+      <Int sr="arg2" val="16" />
+      <Int sr="arg3" val="100" />
+      <Str sr="arg4" ve="3">#FF000000</Str>
+      <Str sr="arg5" ve="3" />
+      <Int sr="arg6" val="3" />
+      <Img sr="arg7" ve="2">
+        <nme>hd_ab_content_remove</nme>
+      </Img>
+    </ButtonElement>
+    <PropertiesElement sr="props">
+      <Int sr="arg0" val="2" />
+      <Int sr="arg1" val="2" />
+      <Str sr="arg2" ve="3">#FF6FF57D</Str>
+      <Int sr="arg3" val="0" />
+      <Str sr="arg4" ve="3">pogo-finder</Str>
+      <Str sr="arg5" ve="3" />
+      <Img sr="arg6" ve="2">
+        <nme>hd_ab_action_settings</nme>
+      </Img>
+      <Str sr="arg7" ve="3" />
+      <ListElementItem sr="item0">
+        <label>Set Location</label>
+        <Action sr="action" ve="7">
+          <code>523</code>
+          <Str sr="arg0" ve="3">pogo-find: Location</Str>
+          <Str sr="arg1" ve="3">%LOC</Str>
+          <Img sr="arg2" ve="2">
+            <nme>hd_device_access_location_found</nme>
+          </Img>
+          <Int sr="arg3" val="0" />
+          <Int sr="arg4" val="0" />
+          <Int sr="arg5" val="3" />
+          <ListElementItem sr="item0">
+            <label>Cancel Location</label>
+            <Action sr="action" ve="7">
+              <code>779</code>
+              <Str sr="arg0" ve="3">pogo-find: Location</Str>
+              <Int sr="arg1" val="0" />
+            </Action>
+            <Img sr="icon" ve="2">
+              <nme>hd_aaa_ext_tiles_small</nme>
+            </Img>
+          </ListElementItem>
+        </Action>
+        <Img sr="icon" ve="2">
+          <nme>hd_device_access_location_found</nme>
+        </Img>
+      </ListElementItem>
+    </PropertiesElement>
+  </Scene>
+  <Task sr="task4">
+    <cdate>1469579320179</cdate>
+    <edate>1469579320179</edate>
+    <id>4</id>
+    <Action sr="act0" ve="7">
+      <code>523</code>
+      <Str sr="arg0" ve="3">pogo-find: Location</Str>
+      <Str sr="arg1" ve="3">%LOC</Str>
+      <Img sr="arg2" ve="2">
+        <nme>hd_device_access_location_found</nme>
+      </Img>
+      <Int sr="arg3" val="0" />
+      <Int sr="arg4" val="0" />
+      <Int sr="arg5" val="3" />
+    </Action>
+    <Action sr="act1" ve="7">
+      <code>779</code>
+      <Str sr="arg0" ve="3">pogo-find: Location</Str>
+      <Int sr="arg1" val="0" />
+    </Action>
+  </Task>
+  <Task sr="task5">
+    <cdate>1469579320179</cdate>
+    <edate>1469579320179</edate>
+    <id>5</id>
+    <Action sr="act0" ve="7">
+      <code>523</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Str sr="arg1" ve="3">3</Str>
+      <Img sr="arg2" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+      <Int sr="arg3" val="0" />
+      <Int sr="arg4" val="0" />
+      <Int sr="arg5" val="3" />
+    </Action>
+    <Action sr="act1" ve="7">
+      <code>779</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Int sr="arg1" val="0" />
+    </Action>
+  </Task>
+  <Task sr="task6">
+    <cdate>1469579320179</cdate>
+    <edate>1469579320179</edate>
+    <id>6</id>
+    <Action sr="act0" ve="7">
+      <code>523</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Str sr="arg1" ve="3">5</Str>
+      <Img sr="arg2" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+      <Int sr="arg3" val="0" />
+      <Int sr="arg4" val="0" />
+      <Int sr="arg5" val="3" />
+    </Action>
+    <Action sr="act1" ve="7">
+      <code>779</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Int sr="arg1" val="0" />
+    </Action>
+  </Task>
+  <Task sr="task7">
+    <cdate>1469579320179</cdate>
+    <edate>1469579320179</edate>
+    <id>7</id>
+    <Action sr="act0" ve="7">
+      <code>523</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Str sr="arg1" ve="3">7</Str>
+      <Img sr="arg2" ve="2">
+        <nme>hd_aaa_ext_bike</nme>
+      </Img>
+      <Int sr="arg3" val="0" />
+      <Int sr="arg4" val="0" />
+      <Int sr="arg5" val="3" />
+    </Action>
+    <Action sr="act1" ve="7">
+      <code>779</code>
+      <Str sr="arg0" ve="3">pogo-find: Distance</Str>
+      <Int sr="arg1" val="0" />
+    </Action>
+  </Task>
+  <Task sr="task8">
+    <cdate>1469580662913</cdate>
+    <edate>1469580662913</edate>
+    <id>8</id>
+    <Action sr="act0" ve="7">
+      <code>49</code>
+      <Str sr="arg0" ve="3">pogo-finder</Str>
+    </Action>
+  </Task>
+</TaskerData>
