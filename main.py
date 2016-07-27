@@ -41,7 +41,7 @@ LOGIN_OAUTH = 'https://sso.pokemon.com/sso/oauth2.0/accessToken'
 APP = 'com.nianticlabs.pokemongo'
 
 with open('credentials.json') as file:
-	credentials = json.load(file)
+    credentials = json.load(file)
 
 PTC_CLIENT_SECRET = credentials.get('ptc_client_secret', None)
 ANDROID_ID = credentials.get('android_id', None)
@@ -65,6 +65,8 @@ FLOAT_LONG = 0
 NEXT_LAT = 0
 NEXT_LONG = 0
 auto_refresh = 0
+steplimit = None
+relog_time = 0
 default_step = 0.001
 pokemons = {}
 gyms = {}
@@ -434,8 +436,6 @@ def get_token(service, username, password):
     else:
         return global_token
 
-
-
 def get_args():
     # load default args
     default_args = {
@@ -560,6 +560,18 @@ def login(args):
     login_session = api_endpoint, access_token, profile_response
     return login_session
 
+def handle_push(json_obj):
+    location = ''
+    if 'push' in json_obj and json_obj['push']['type'] == 'mirror':
+        if json_obj['push']['title'] == 'pogo-find: Location':
+            location = json_obj['push']['body'].rstrip()
+            retrying_set_location(location)
+            print "[+] Changed location: " + location
+        elif json_obj['push']['title'] == 'pogo-find: Distance':
+            global steplimit
+            steplimit = int(json_obj['push']['body'])
+            print "[+] Changed step limit: " + str(steplimit)
+
 def main():
     full_path = os.path.realpath(__file__)
     (path, filename) = os.path.split(full_path)
@@ -589,14 +601,26 @@ def main():
         auto_refresh = int(args.auto_refresh) * 1000
 
     if args.ampm_clock:
-    	global is_ampm_clock
-    	is_ampm_clock = True
+        global is_ampm_clock
+        is_ampm_clock = True
+
+    global relog_time
+    if time.time() > relog_time:
+        relog_time = time.time() + 600
+        print "[+] Logging in to Pokemon Go"
+        global login_session, global_token
+        login_session = None
+        global_token = None
 
     api_endpoint, access_token, profile_response = login(args)
 
     clear_stale_pokemons()
 
-    steplimit = int(args.step_limit)
+    notifier.start_listener(handle_push)
+
+    global steplimit
+    if not steplimit:
+        steplimit = int(args.step_limit)
 
     ignore = []
     only = []
@@ -640,7 +664,6 @@ def main():
         set_location_coords(origin_lat, origin_lon, 0)
 
     register_background_thread()
-
 
 def process_step(args, api_endpoint, access_token, profile_response,
                  pokemonsJSON, ignore, only):
@@ -709,6 +732,15 @@ transform_from_wgs_to_gcj(Location(Fort.Latitude, Fort.Longitude))
             if pokename.lower() not in only and pokeid not in only:
                 continue
 
+        error_text1 = ''
+        error_text2 = ''
+        error_br = ''
+        if poke.TimeTillHiddenMs <= 0:
+            print "[+] Found error time, setting to 15 minutes: " + str(poke.TimeTillHiddenMs)
+            poke.TimeTillHiddenMs = 900000
+            error_text1 = '(!) '
+            error_text2 = 'Error: disappear_time was invalid, set to 15 minutes instead.'
+            error_br = '<br>'
         disappear_timestamp = time.time() + poke.TimeTillHiddenMs \
             / 1000
 
@@ -717,25 +749,29 @@ transform_from_wgs_to_gcj(Location(Fort.Latitude, Fort.Longitude))
                 transform_from_wgs_to_gcj(Location(poke.Latitude,
                     poke.Longitude))
 
+        datestr = datetime.fromtimestamp(disappear_timestamp)
+        dateoutput = datestr.strftime("%H:%M:%S")
+        if is_ampm_clock:
+            dateoutput = datestr.strftime("%I:%M:%S%p").lstrip('0')
+
         pokemon_obj = {
             "lat": poke.Latitude,
             "lng": poke.Longitude,
             "disappear_time": disappear_timestamp,
             "id": poke.pokemon.PokemonId,
-            "name": pokename
+            "name": pokename,
+            "error_text1": error_text1,
+            "error_text2": error_text2,
+            "error_br": error_br,
+            "disappear_time_formatted": dateoutput
         }
 
-        
+        pokespawnkey = poke.SpawnPointId + pokename
+        if pokespawnkey not in pokemons:
+            pushbullet_iden = notifier.pokemon_found(pokemon_obj)
+            pokemon_obj['pushbullet_iden'] = pushbullet_iden
+            pokemons[pokespawnkey] = pokemon_obj
 
-        
-		#change
-	print "Pokemon :", pokemon_obj
-        if poke.SpawnPointId not in pokemons:
-             pokemons[poke.SpawnPointId] = pokemon_obj
-		     
-             notifier.pokemon_found(pokemon_obj)
-        #change
-		
 def clear_stale_pokemons():
     current_time = time.time()
 
@@ -744,6 +780,7 @@ def clear_stale_pokemons():
         if current_time > pokemon['disappear_time']:
             print "[+] removing stale pokemon %s at %f, %f from list" % (
                 pokemon['name'].encode('utf-8'), pokemon['lat'], pokemon['lng'])
+            notifier.pokemon_expired(pokemon)
             del pokemons[pokemon_key]
 
 
@@ -849,16 +886,10 @@ def get_pokemarkers():
 
     for pokemon_key in pokemons:
         pokemon = pokemons[pokemon_key]
-        datestr = datetime.fromtimestamp(pokemon[
-            'disappear_time'])
-        dateoutput = datestr.strftime("%H:%M:%S")
-        if is_ampm_clock:
-        	dateoutput = datestr.strftime("%I:%M%p").lstrip('0')
-        pokemon['disappear_time_formatted'] = dateoutput
 
         LABEL_TMPL = u'''
-<div><b>{name}</b><span> - </span><small><a href='http://www.pokemon.com/us/pokedex/{id}' target='_blank' title='View in Pokedex'>#{id}</a></small></div>
-<div>Disappears at - {disappear_time_formatted} <span class='label-countdown' disappears-at='{disappear_time}'></span></div>
+<div><b>{error_text1}{name}</b><span> - </span><small><a href='http://www.pokemon.com/us/pokedex/{id}' target='_blank' title='View in Pokedex'>#{id}</a></small></div>
+<div>{error_text2}{error_br}Disappears at - {disappear_time_formatted} <span class='label-countdown' disappears-at='{disappear_time}'></span></div>
 <div><a href='https://www.google.com/maps/dir/Current+Location/{lat},{lng}' target='_blank' title='View in Maps'>Get Directions</a></div>
 '''
         label = LABEL_TMPL.format(**pokemon)
