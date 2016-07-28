@@ -66,6 +66,8 @@ NEXT_LAT = 0
 NEXT_LONG = 0
 auto_refresh = 0
 steplimit = None
+show_scan_locations = False
+current_scan_location = 0
 relog_time = 0
 default_step = 0.001
 pokemons = {}
@@ -459,7 +461,8 @@ def get_args():
         "port": 5000,
         "pushbullet": None,
         "step_limit": 4,
-        "username": None
+        "username": None,
+        "show_scan_locations": False
     }
 
     INTEGER_STR = "int"
@@ -486,7 +489,8 @@ def get_args():
         "port": INTEGER_STR,
         "pushbullet": STRING_STR,
         "step_limit": INTEGER_STR,
-        "username": STRING_STR
+        "username": STRING_STR,
+        "show_scan_locations": BOOLEAN_STR
     }
     # load config file
     with open('config.json') as data_file:
@@ -567,10 +571,12 @@ def handle_push(json_obj):
             location = json_obj['push']['body'].rstrip()
             retrying_set_location(location)
             print "[+] Changed location: " + location
+            notifier.send_note("Location updated!", location)
         elif json_obj['push']['title'] == 'pogo-find: Distance':
             global steplimit
             steplimit = int(json_obj['push']['body'])
             print "[+] Changed step limit: " + str(steplimit)
+            notifier.send_note("Step limit updated!", str(steplimit))
 
 def main():
     full_path = os.path.realpath(__file__)
@@ -590,6 +596,10 @@ def main():
         global DEBUG
         DEBUG = True
         print '[!] DEBUG mode on'
+
+    global show_scan_locations
+    if args.show_scan_locations:
+        show_scan_locations = True
 
     # only get location for first run
     if not (FLOAT_LAT and FLOAT_LONG):
@@ -629,6 +639,7 @@ def main():
     elif args.only:
         only = [i.lower().strip() for i in args.only.split(',')]
 
+    global current_scan_location
     pos = 1
     x = 0
     y = 0
@@ -636,12 +647,13 @@ def main():
     dy = -1
     steplimit2 = steplimit**2
     for step in range(steplimit2):
+        current_scan_location = step + 1
         #starting at 0 index
         debug('looping: step {} of {}'.format((step+1), steplimit**2))
         #debug('steplimit: {} x: {} y: {} pos: {} dx: {} dy {}'.format(steplimit2, x, y, pos, dx, dy))
         # Scan location math
         if -steplimit2 / 2 < x <= steplimit2 / 2 and -steplimit2 / 2 < y <= steplimit2 / 2:
-            set_location_coords(x * 0.0025 + origin_lat, y * 0.0025 + origin_lon, 0)
+            set_location_coords(x * 0.0025 + origin_lat, y * 0.0030 + origin_lon, 0)
         if x == y or x < 0 and x == -y or x > 0 and x == 1 - y:
             (dx, dy) = (-dy, dx)
 
@@ -652,6 +664,8 @@ def main():
 
         print('Completed: ' + str(
             ((step+1) + pos * .25 - .25) / (steplimit2) * 100) + '%')
+
+    current_scan_location = 0
 
     global NEXT_LAT, NEXT_LONG
     if (NEXT_LAT and NEXT_LONG and
@@ -872,6 +886,19 @@ def next_loc():
         NEXT_LONG = float(lon)
         return 'ok'
 
+@app.route('/new_loc')
+def new_loc():
+    global origin_lat, origin_lon
+
+    lat = flask.request.args.get('lat', '')
+    lon = flask.request.args.get('lon', '')
+    if not (lat and lon):
+        print('[-] Invalid new location: %s,%s' % (lat, lon))
+    else:
+        print('[+] Saved new location as %s,%s' % (lat, lon))
+        origin_lat = float(lat)
+        origin_lon = float(lon)
+        return 'ok'
 
 def get_pokemarkers():
     pokeMarkers = [{
@@ -881,8 +908,39 @@ def get_pokemarkers():
         'infobox': "Start position",
         'type': 'custom',
         'key': 'start-position',
-        'disappear_time': -1
+        'disappear_time': -1,
+        'draggable': True
     }]
+
+    global steplimit
+    if show_scan_locations and steplimit:
+        global current_scan_location
+        pos = 1
+        x = 0
+        y = 0
+        dx = 0
+        dy = -1
+        steplimit2 = steplimit**2
+        for step in range(steplimit2):
+            this_icon = icons.dots.blue
+            icon_refresher = 0
+            if current_scan_location == step:
+                this_icon = icons.dots.pink
+                icon_refresher = 0.00000001
+            # Scan location math
+            if step > 0 and -steplimit2 / 2 < x <= steplimit2 / 2 and -steplimit2 / 2 < y <= steplimit2 / 2:
+                pokeMarkers.append({
+                    'icon': this_icon,
+                    'lat': x * 0.0025 + origin_lat + icon_refresher,
+                    'lng': y * 0.0030 + origin_lon,
+                    'infobox': "Scan position " + str(step+1),
+                    'type': 'custom',
+                    'key': 'scan-position-' + str(step+1),
+                    'disappear_time': -1
+                })
+            if x == y or x < 0 and x == -y or x > 0 and x == 1 - y:
+                (dx, dy) = (-dy, dx)
+            (x, y) = (x + dx, y + dy)
 
     for pokemon_key in pokemons:
         pokemon = pokemons[pokemon_key]

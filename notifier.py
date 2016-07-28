@@ -78,6 +78,11 @@ def pokemon_found(pokemon):
 
     return push['iden']
 
+def send_note(notetitle, notebody):
+    push = pushbullet_client.push_note(notetitle, notebody)
+
+    return push['iden']
+
 def pokemon_expired(pokemon):
     if pokemon['pushbullet_iden']:
         pushbullet_client.dismiss_push(pokemon['pushbullet_iden'])

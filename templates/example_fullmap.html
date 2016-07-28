@@ -190,8 +190,17 @@
                             position: new google.maps.LatLng(item["lat"], item["lng"]),
                             map: map,
                             icon: item["icon"],
+                            draggable: item["draggable"]
                         });
                     markerCache[key] = {item: item, marker: marker};
+
+                    if (item["draggable"]) {
+                        (function(_key, _map, _marker){
+                            _marker.addListener('dragend', function (event) {
+                                $.ajax("/new_loc?lat=" + event.latLng.lat() + "&lon=" + event.latLng.lng());
+                            });
+                        })(item["key"], map, marker);
+                    }
 
                     if (item["infobox"]) {
                         (function(_infobox, _map, _marker){
