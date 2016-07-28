@@ -59,6 +59,8 @@
         var map = null;
         var markers = [];
         var markerCache = {};
+        var boundry = null;
+        var boundryPoints = [];
         // Adds a marker to the map and push to the array.
         function addMarker(options = {}) {
             var default_options = {map: map}
@@ -142,6 +144,38 @@
         function updateMap(){
             // A new map is created because the original one isn't saved
             createMap();
+            // Requests the scan boundry square to draw
+            $.get(baseURL + '/scanboundry', function(response){
+                if (!response) { return; }
+                var json_obj = $.parseJSON(response);
+                if (
+                    boundryPoints.length == json_obj.length
+                    && boundryPoints.every(function(element, index) {
+                        return element === json_obj[index]; 
+                    })
+                ) { return; }
+                boundryPoints = json_obj;
+
+                var sq1 = [
+                    new google.maps.LatLng(json_obj[0], json_obj[1]),
+                    new google.maps.LatLng(json_obj[0], json_obj[3]),
+                    new google.maps.LatLng(json_obj[2], json_obj[3]),
+                    new google.maps.LatLng(json_obj[2], json_obj[1]),
+                    new google.maps.LatLng(json_obj[0], json_obj[1]),
+                ];
+
+                if (boundry) {
+                    boundry.setMap(null);
+                }
+                boundry = new google.maps.Polyline({
+                    map: map,
+                    path: sq1,
+                    strokeColor: '#2EB82E',
+                    strokeOpacity: 0.5,
+                    strokeWeight: 5,
+                    key: 'scan-boundry'
+                });
+            });
             // Requests the data and populates the map
             $.get(baseURL + "/data", function(response){
                 var json_obj = $.parseJSON(response);
@@ -164,7 +198,7 @@
                         if (markerCache[key].item.type != item["type"] || (item["infobox"] != null && markerCache[key].item["infobox"] != null && item["infobox"] != markerCache[key].item["infobox"])) {
                             (function(_marker){setTimeout(_marker.setMap(null), 500)})(markerCache[key].marker);
                             needs_replacing = true;
-						}
+                        }
                         if(!needs_replacing){
                             continue;
                         }
@@ -229,7 +263,7 @@
                     })(marker, disappearsAt);
                 }
                 // deleteMarkers(markers.Length - json_obj.length);
-            })
+            });
         }
         window.setInterval(updateMap, {{ auto_refresh }});
     </script>

@@ -67,6 +67,8 @@ NEXT_LONG = 0
 auto_refresh = 0
 steplimit = None
 show_scan_locations = False
+show_scan_boundry = False
+hide_inactive_scan_locations = False
 current_scan_location = 0
 relog_time = 0
 default_step = 0.001
@@ -462,7 +464,9 @@ def get_args():
         "pushbullet": None,
         "step_limit": 4,
         "username": None,
-        "show_scan_locations": False
+        "show_scan_locations": False,
+        "hide_inactive_scan_locations": False,
+        "show_scan_boundry": False
     }
 
     INTEGER_STR = "int"
@@ -490,7 +494,9 @@ def get_args():
         "pushbullet": STRING_STR,
         "step_limit": INTEGER_STR,
         "username": STRING_STR,
-        "show_scan_locations": BOOLEAN_STR
+        "show_scan_locations": BOOLEAN_STR,
+        "hide_inactive_scan_locations": BOOLEAN_STR,
+        "show_scan_boundry": BOOLEAN_STR
     }
     # load config file
     with open('config.json') as data_file:
@@ -600,6 +606,14 @@ def main():
     global show_scan_locations
     if args.show_scan_locations:
         show_scan_locations = True
+
+    global hide_inactive_scan_locations
+    if args.hide_inactive_scan_locations:
+        hide_inactive_scan_locations = True
+
+    global show_scan_boundry
+    if args.show_scan_boundry:
+        show_scan_boundry = True
 
     # only get location for first run
     if not (FLOAT_LAT and FLOAT_LONG):
@@ -841,6 +855,11 @@ def create_app():
 app = create_app()
 
 
+@app.route('/scanboundry')
+def scan_boundry():
+    """ Gets the 4 points that indicate the boundr of the scan points via REST """
+    return json.dumps(get_scan_boundry())
+
 @app.route('/data')
 def data():
     """ Gets all the PokeMarkers via REST """
@@ -900,6 +919,43 @@ def new_loc():
         origin_lon = float(lon)
         return 'ok'
 
+def get_scan_boundry():
+    global show_scan_boundry, steplimit
+    if show_scan_boundry and steplimit:
+        pos = 1
+        x = 0
+        y = 0
+        dx = 0
+        dy = -1
+        max_lat_loc = -1 * sys.float_info.max
+        max_lon_loc = -1 * sys.float_info.max
+        min_lat_loc = sys.float_info.max
+        min_lon_loc = sys.float_info.max
+        steplimit2 = steplimit**2
+        for step in range(steplimit2):
+            # Scan location math
+            if step > 0 and -steplimit2 / 2 < x <= steplimit2 / 2 and -steplimit2 / 2 < y <= steplimit2 / 2:
+                lat = x * 0.0025 + origin_lat
+                lon = y * 0.0030 + origin_lon
+                if lat > max_lat_loc:
+                    max_lat_loc = lat
+                if lon > max_lon_loc:
+                    max_lon_loc = lon
+                if lat < min_lat_loc:
+                    min_lat_loc = lat
+                if lon < min_lon_loc:
+                    min_lon_loc = lon
+            if x == y or x < 0 and x == -y or x > 0 and x == 1 - y:
+                (dx, dy) = (-dy, dx)
+            (x, y) = (x + dx, y + dy)
+
+        return [
+            max_lat_loc,
+            max_lon_loc,
+            min_lat_loc,
+            min_lon_loc
+        ]
+
 def get_pokemarkers():
     pokeMarkers = [{
         'icon': icons.dots.red,
@@ -912,9 +968,9 @@ def get_pokemarkers():
         'draggable': True
     }]
 
-    global steplimit
+    global steplimit, show_scan_locations
     if show_scan_locations and steplimit:
-        global current_scan_location
+        global current_scan_location, hide_inactive_scan_locations
         pos = 1
         x = 0
         y = 0
@@ -924,20 +980,28 @@ def get_pokemarkers():
         for step in range(steplimit2):
             this_icon = icons.dots.blue
             icon_refresher = 0
-            if current_scan_location == step:
+            if step < current_scan_location:
+                this_icon = icons.dots.green
+            elif step == current_scan_location:
                 this_icon = icons.dots.pink
                 icon_refresher = 0.00000001
             # Scan location math
             if step > 0 and -steplimit2 / 2 < x <= steplimit2 / 2 and -steplimit2 / 2 < y <= steplimit2 / 2:
-                pokeMarkers.append({
-                    'icon': this_icon,
-                    'lat': x * 0.0025 + origin_lat + icon_refresher,
-                    'lng': y * 0.0030 + origin_lon,
-                    'infobox': "Scan position " + str(step+1),
-                    'type': 'custom',
-                    'key': 'scan-position-' + str(step+1),
-                    'disappear_time': -1
-                })
+                if step == current_scan_location or not hide_inactive_scan_locations:
+                    markerkey = 'scan-position-' + str(step+1)
+                    if hide_inactive_scan_locations:
+                        markerkey = 'active-scan-position'
+                    pokeMarkers.append({
+                        'icon': this_icon,
+                        'lat': x * 0.0025 + origin_lat + icon_refresher,
+                        'lng': y * 0.0030 + origin_lon,
+                        'infobox': "Scan position " + str(step+1),
+                        'type': 'custom',
+                        'key': markerkey,
+                        'disappear_time': -1
+                    })
+                    if hide_inactive_scan_locations:
+                        break
             if x == y or x < 0 and x == -y or x > 0 and x == 1 - y:
                 (dx, dy) = (-dy, dx)
             (x, y) = (x + dx, y + dy)
@@ -1008,7 +1072,6 @@ def get_pokemarkers():
                 'infobox': 'Pokestop',
             })
     return pokeMarkers
-
 
 def get_map():
     fullmap = Map(
