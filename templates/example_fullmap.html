@@ -186,17 +186,27 @@
                     var key = item["type"]+item["key"];
                     if(Object.keys(markerCache).indexOf(key) >= 0){
                         var needs_replacing = false;
-                        if(item["type"] == "gym" && item["icon"] != markerCache[key].item.icon){
+                        if(
+                            markerCache[key].item.icon != item["icon"]
+                            || (
+                                markerCache[key].item.type != item["type"]
+                                || (
+                                    markerCache[key].item["infobox"] != null
+                                    && item["infobox"] != null
+                                    && markerCache[key].item["infobox"] != item["infobox"]
+                                )
+                            )
+                        ){
                             (function(_marker){setTimeout(_marker.setMap(null), 500)})(markerCache[key].marker);
                             needs_replacing = true;
                         }
-                        if((markerCache[key].item.lat != item["lat"] || markerCache[key].item.lng != item['lng'])){
-
-                            console.log("Warning: object with identical key has different coordinates please report bug", key);
-                            needs_replacing = true;
-                        }
-                        if (markerCache[key].item.type != item["type"] || (item["infobox"] != null && markerCache[key].item["infobox"] != null && item["infobox"] != markerCache[key].item["infobox"])) {
-                            (function(_marker){setTimeout(_marker.setMap(null), 500)})(markerCache[key].marker);
+                        if(
+                            markerCache[key].item.lat != item["lat"]
+                            || markerCache[key].item.lng != item['lng']
+                        ){
+                            if(item["type"] != "custom"){
+                                console.log("Warning: object with identical key has different coordinates please report bug", key);
+                            }
                             needs_replacing = true;
                         }
                         if(!needs_replacing){

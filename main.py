@@ -979,12 +979,10 @@ def get_pokemarkers():
         steplimit2 = steplimit**2
         for step in range(steplimit2):
             this_icon = icons.dots.blue
-            icon_refresher = 0
             if step < current_scan_location:
                 this_icon = icons.dots.green
             elif step == current_scan_location:
                 this_icon = icons.dots.pink
-                icon_refresher = 0.00000001
             # Scan location math
             if step > 0 and -steplimit2 / 2 < x <= steplimit2 / 2 and -steplimit2 / 2 < y <= steplimit2 / 2:
                 if step == current_scan_location or not hide_inactive_scan_locations:
@@ -993,7 +991,7 @@ def get_pokemarkers():
                         markerkey = 'active-scan-position'
                     pokeMarkers.append({
                         'icon': this_icon,
-                        'lat': x * 0.0025 + origin_lat + icon_refresher,
+                        'lat': x * 0.0025 + origin_lat,
                         'lng': y * 0.0030 + origin_lon,
                         'infobox': "Scan position " + str(step+1),
                         'type': 'custom',
